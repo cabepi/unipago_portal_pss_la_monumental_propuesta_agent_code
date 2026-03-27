@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimación Portal PSS - La Monumental</title>
+    <!-- Modern distinctive typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=DM+Sans:opsz,wght@9..40,400;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-base: #030305;
+            --surface-glass: rgba(20, 21, 26, 0.45);
+            --surface-border: rgba(255, 255, 255, 0.06);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-primary: #00e5ff;
+            --accent-purple: #8b5cf6;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem 1.5rem;
+            position: relative;
+        }
+
+        /* Ambient effects */
+        .ambient-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            overflow: hidden;
+            background: radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15), transparent 40%),
+                        radial-gradient(circle at 85% 30%, rgba(0, 229, 255, 0.15), transparent 40%);
+            filter: blur(60px);
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.04;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            position: relative;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .badge {
+            display: inline-block;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            background: rgba(0, 229, 255, 0.1);
+            color: var(--accent-primary);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+        }
+
+        .hero h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .hero .highlight {
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Bento Grid */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+
+        .bento-card {
+            background: var(--surface-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--surface-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+        }
+
+        .bento-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 24px;
+            padding: 1px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .bento-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset;
+        }
+
+        .bento-card h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .bento-card h2::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 24px;
+            background: var(--accent-primary);
+            border-radius: 4px;
+            box-shadow: 0 0 12px var(--accent-primary);
+        }
+
+        /* Specific Cards */
+        .table-card { grid-column: span 12; }
+        .team-card { grid-column: span 12; }
+        .stack-card { grid-column: span 12; }
+        .conclusion-card { grid-column: span 12; }
+        
+        @media (min-width: 1024px) {
+            .table-card { grid-column: span 12; }
+            .team-card { grid-column: span 4; }
+            .stack-card { grid-column: span 4; }
+            .conclusion-card { grid-column: span 4; }
+            
+            /* Make the table layout a bit more compact if it is full width */
+            .table-wrapper table {
+                table-layout: fixed;
+            }
+        }
+
+        /* Table Styles */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        th {
+            font-family: 'Syne', sans-serif;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+        
+        tbody tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .merged-cell {
+            background: rgba(0, 229, 255, 0.03);
+            border-left: 1px solid rgba(0, 229, 255, 0.1);
+            vertical-align: middle;
+        }
+
+        .text-glow {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .accent-text {
+            color: var(--accent-primary);
+            font-family: 'Syne', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        tfoot th {
+            padding-top: 1.5rem;
+            border-bottom: none;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .total-bad { color: var(--danger); font-size: 1.5rem; font-family: 'Syne', sans-serif; font-weight: 800;}
+        .total-good { color: var(--success); font-size: 1.5rem; font-family: 'Syne', sans-serif; font-weight: 800; text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);}
+
+        /* Team Comparison */
+        .team-comparison {
+            display: flex;
+            align-items: stretch;
+            gap: 1rem;
+            height: 100%;
+        }
+
+        .team-col {
+            flex: 1;
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.03);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .team-col.agentic {
+            background: linear-gradient(180deg, rgba(139, 92, 246, 0.1) 0%, rgba(0,0,0,0.2) 100%);
+            border-color: rgba(139, 92, 246, 0.2);
+            position: relative;
+        }
+
+        .team-col.agentic::before {
+            content: "OPTIMIZADO";
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-purple);
+            font-size: 0.6rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+        }
+
+        .team-header {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .team-number {
+            font-size: 4rem;
+            line-height: 1;
+            margin-bottom: 1.5rem;
+            font-weight: 800;
+        }
+        
+        .traditional .team-number { color: var(--text-secondary); }
+        .agentic .team-number { 
+            background: linear-gradient(135deg, #e879f9 0%, var(--accent-purple) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .team-list {
+            list-style: none;
+            margin-top: auto;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 1rem;
+        }
+
+        .team-list li {
+            font-size: 0.875rem;
+            padding: 0.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .vs {
+            display: flex;
+            align-items: center;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            color: var(--surface-border);
+            font-size: 0.875rem;
+        }
+
+        /* Stack Comparison */
+        .tech-comparison {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .tech-group {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+        
+        .tech-group.agentic {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border-color: rgba(0, 229, 255, 0.15);
+        }
+
+        .tech-header {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+        
+        .tech-group.agentic .tech-header {
+            color: var(--accent-primary);
+        }
+
+        .tech-list {
+            list-style: none;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
+        .tech-list li {
+            margin-bottom: 0.5rem;
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        .tech-list li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.4rem;
+            width: 4px;
+            height: 4px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+        }
+
+        .tech-group.agentic .tech-list li::before {
+            background: var(--accent-primary);
+            box-shadow: 0 0 5px var(--accent-primary);
+        }
+
+        .tech-list .label {
+            color: var(--text-secondary);
+            font-weight: bold;
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .tech-list li:first-child .label {
+            margin-top: 0;
+        }
+
+        .tech-note {
+            font-size: 0.7rem;
+            color: var(--accent-purple);
+            margin-top: 0.8rem;
+            font-style: italic;
+        }
+        .tech-note::before { display: none; }
+        .tech-note { padding-left: 0 !important; }
+
+        /* Conclusion Card */
+        .conclusion-card {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .conclusion-card p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .impact-stats {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: auto;
+        }
+
+        .stat {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid rgba(255,255,255,0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat::after {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 4px;
+            background: var(--success);
+            opacity: 0.5;
+        }
+
+        .stat:nth-child(2)::after { background: var(--accent-primary); }
+        .stat:nth-child(3)::after { background: var(--accent-purple); }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: right;
+            max-width: 100px;
+        }
+
+        /* Staggered Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-up {
+            opacity: 0;
+            animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation-delay: var(--delay);
+        }
+
+        @media (max-width: 768px) {
+            .bento-card { padding: 1.5rem; }
+            .team-comparison { flex-direction: column; }
+            .vs { display: none; }
+        }
+
+        /* Calculate logic UI */
+        .btn-calc {
+            background: rgba(0, 229, 255, 0.1);
+            color: var(--accent-primary);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-family: 'Syne', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            align-self: flex-start;
+        }
+
+        .btn-calc:hover {
+            background: rgba(0, 229, 255, 0.2);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .calc-panel {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: none;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .calc-panel.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .calc-panel strong {
+            color: var(--text-primary);
+            font-family: 'Syne', sans-serif;
+            font-size: 0.9rem;
+        }
+        
+        .calc-panel ul {
+            padding-left: 1.2rem;
+            margin-top: 0.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .calc-panel ul li {
+            margin-bottom: 0.2rem;
+        }
+        
+        .calc-panel hr {
+            border: 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            margin: 0.8rem 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-mesh" id="ambient-mesh"></div>
+    <div class="noise-overlay" id="noise-overlay"></div>
+
+    <main class="container" id="report-container">
+        
+        <header class="hero">
+            <div class="badge animate-up" style="--delay: 0.1s">Estudio de Estimación: Portal PSS</div>
+            <h1 class="animate-up" style="--delay: 0.2s">La <span class="highlight">Monumental</span></h1>
+            <p class="animate-up" style="--delay: 0.3s">Análisis de Eficiencia y distribución del trabajo: Mecanismo Clásico vs. Modelo de Agentes.</p>
+        </header>
+
+        <section class="bento-grid">
+            
+            <!-- Table Card -->
+            <div class="bento-card table-card animate-up" style="--delay: 0.4s">
+                <h2>Desglose Operativo</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Modelo Tradicional</th>
+                                <th>Trabajo (Hrs)</th>
+                                <th>Modelo Agentes</th>
+                                <th>Trabajo (Hrs)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>A&D (Modelos y Tablas)</td>
+                                <td>11</td>
+                                <td rowspan="3" class="merged-cell text-glow">Análisis</td>
+                                <td rowspan="3" class="merged-cell accent-text">173.4</td>
+                            </tr>
+                            <tr>
+                                <td>A&D (Servicios)</td>
+                                <td>62</td>
+                            </tr>
+                            <tr>
+                                <td>A&D (Portal)</td>
+                                <td>216</td>
+                            </tr>
+                            <tr>
+                                <td>Dev (Modelos y Tablas)</td>
+                                <td>44</td>
+                                <td rowspan="3" class="merged-cell text-glow">Desarrollo</td>
+                                <td rowspan="3" class="merged-cell accent-text">502</td>
+                            </tr>
+                            <tr>
+                                <td>Dev (Servicios)</td>
+                                <td>504</td>
+                            </tr>
+                            <tr>
+                                <td>Dev (Frontend Portal)</td>
+                                <td>456</td>
+                            </tr>
+                            <tr>
+                                <td>Calidad (Portal)</td>
+                                <td>160</td>
+                                <td class="merged-cell text-glow">Calidad</td>
+                                <td class="merged-cell accent-text">120</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th>Total Horas</th>
+                                <th class="total-bad">1,453</th>
+                                <th>Total Agentes</th>
+                                <th class="total-good">795.4</th>
+                            </tr>
+                            <tr>
+                                <th>Implemetanción Lineal<br><span style="text-transform:none; opacity: 0.6; font-size: 0.7rem; font-weight: normal; letter-spacing: normal;">(Jornadas 8h, 5d/sem)</span></th>
+                                <th class="total-bad" style="font-size: 1.25rem;">~36.3 Semanas<br><span style="font-size:0.85rem; opacity:0.8; font-weight:500;">9 Meses</span></th>
+                                <th>Proyección Agentes</th>
+                                <th class="total-good" style="font-size: 1.25rem;">~19.9 Semanas<br><span style="font-size:0.85rem; opacity:0.8; font-weight:500;">5 Meses</span></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Team Card -->
+            <div class="bento-card team-card animate-up" style="--delay: 0.5s">
+                <h2>Cédula de Trabajo</h2>
+                <div class="team-comparison">
+                    <div class="team-col traditional">
+                        <div class="team-header">Clásico</div>
+                        <div class="team-number">5</div>
+                        <ul class="team-list">
+                            <li>1 Analista</li>
+                            <li>2 Desarrolladores</li>
+                            <li>2 QA</li>
+                        </ul>
+                    </div>
+                    <div class="vs">/</div>
+                    <div class="team-col agentic">
+                        <div class="team-header">Agentes</div>
+                        <div class="team-number">3</div>
+                        <ul class="team-list">
+                            <li>1 Analista</li>
+                            <li>1 Desarrollador</li>
+                            <li>1 QA</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stack Card -->
+            <div class="bento-card stack-card animate-up" style="--delay: 0.6s">
+                <h2>Arquitectura Cloud</h2>
+                <div class="tech-comparison">
+                    <div class="tech-group">
+                        <div class="tech-header">Mecanismo Clásico</div>
+                        <ul class="tech-list">
+                            <li><span class="label">Stack Tecnológico</span> Oracle APEX & Suite.</li>
+                            <li><span class="label">Despliegue</span> On-Premise o en Nube Privada (adquirida o provista por el cliente).</li>
+                        </ul>
+                    </div>
+                    <div class="tech-group agentic">
+                        <div class="tech-header">Modelo Agentes (SaaS)</div>
+                        <ul class="tech-list">
+                            <li><span class="label">Stack Moderno</span> React, Node.js, PostgreSQL.</li>
+                            <li><span class="label">Despliegue Ágil</span> Desplegado como SaaS en AWS o Vercel.</li>
+                            <li class="tech-note">* Si no se adopta como SaaS, el cliente debe adquirir AWS/Vercel independientemente para su instalación.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROI Card -->
+            <div class="bento-card conclusion-card animate-up" style="--delay: 0.7s">
+                <h2>Impacto Global</h2>
+                <p>La integración de capacidades agenticas condensa drásticamente las fases del proyecto. Un equipo compacto logra mayor cohesión técnica reduciendo los traslados y tiempos muertos.</p>
+                
+                <button class="btn-calc" onclick="toggleCalcPanel()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                    Justificación de Cálculos
+                </button>
+
+                <div id="calcPanel" class="calc-panel">
+                    <strong>Horas Totales:</strong>
+                    <ul><li>1,453 (Clásico) - 795.4 (Agentes) = <strong>- 657.6 hrs</strong></li></ul>
+                    <hr>
+                    <strong>Tiempo Estimado (Semanas/Meses):</strong>
+                    <ul>
+                        <li>Clásico: 1,453 hrs / 40 hrs-sem = <strong>36.3 sem</strong> (~9 meses)</li>
+                        <li>Agentes: 795.4 hrs / 40 hrs-sem = <strong>19.9 sem</strong> (~5 meses)</li>
+                    </ul>
+                    <hr>
+                    <strong>Recursos Humanos:</strong>
+                    <ul><li>Reducción de 5 a 3 integrantes = 2 per. (<strong>- 40%</strong>)</li></ul>
+                    <hr>
+                    <strong>Productividad Aumentada:</strong>
+                    <ul><li>Ahorro horario (657.6) sobre la base original (1,453) = <strong>+ ~45.2%</strong> de eficiencia.</li></ul>
+                </div>
+
+                <div class="impact-stats">
+                    <div class="stat">
+                        <span class="stat-value">- 657.6</span>
+                        <span class="stat-label">Horas Totales</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value">- 40%</span>
+                        <span class="stat-label">Recursos Humanos</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value">+ 45%</span>
+                        <span class="stat-label">Productividad</span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        function toggleCalcPanel() {
+            const panel = document.getElementById('calcPanel');
+            if(panel.classList.contains('active')) {
+                panel.classList.remove('active');
+                setTimeout(() => {
+                    if(!panel.classList.contains('active')) panel.style.display = 'none';
+                }, 300);
+            } else {
+                panel.style.display = 'block';
+                // Trigger reflow for transition
+                void panel.offsetWidth;
+                panel.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
